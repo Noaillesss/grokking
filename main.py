@@ -12,6 +12,7 @@ import grokking.training as training
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--architecture", nargs="?", type=str, default="transformer")
+    parser.add_argument("--training_fraction", nargs="?", type=float, default=0.8)
     parser.add_argument("--optimizer", nargs="?", type=str, default="adamw")
     parser.add_argument("--random_seed", nargs="?", type=int, default=42)
     args = parser.parse_args()
@@ -24,6 +25,12 @@ if __name__ == "__main__":
     params = YParams(config_file, architecture, print_params=True)
     params.device = device
 
+    if args.training_fraction is not None:
+        params.training_fraction = args.training_fraction
+        print("Overriding training fraction to", params.training_fraction)
+    if args.optimizer is not None:
+        params.optimizer = args.optimizer
+        print("Overriding optimizer to", params.optimizer)
     if args.random_seed is not None:
         params.random_seed = args.random_seed
         print("Overriding random seed to", params.random_seed)
