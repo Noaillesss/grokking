@@ -4,6 +4,7 @@ import torch
 import numpy as np
 import random
 import matplotlib.pyplot as plt
+import os
 
 from grokking.data import *
 from grokking.model import *
@@ -52,7 +53,7 @@ if __name__ == "__main__":
             dim_model=params.dim_model,
             num_heads=params.num_heads,
             num_tokens=params.prime + 2,
-            seq_len=5
+            dropout=params.dropout
             ).to(device)
     elif architecture == "mlp":
         NotImplementedError("MLP architecture not implemented")
@@ -83,6 +84,11 @@ if __name__ == "__main__":
 
     train_accuracy, train_loss, val_accuracy, val_loss = training.train(model, train_loader, val_loader, optimizer, scheduler, params)
 
+    save_fig_path = f'./figures/{architecture}'
+    if not os.path.exists(save_fig_path):
+        os.makedirs(save_fig_path)
+
+
     # Plot the training and validation accuracy
     steps = np.arange(1, len(train_accuracy) + 1)
     plt.figure(figsize=(10, 6))
@@ -94,7 +100,7 @@ if __name__ == "__main__":
     plt.title(f'Modular Sum (training on {params.training_fraction * 100:.0f}% of data)')
     plt.legend()
     plt.grid(True)
-    plt.savefig(f'./figures/{architecture}_{params.training_fraction * 100:.0f}_accuracy.png')
+    plt.savefig(save_fig_path + f'/{params.training_fraction * 100:.0f}_accuracy.png')
 
     # Plot the training and validation loss
     plt.figure(figsize=(10, 6))
@@ -106,6 +112,6 @@ if __name__ == "__main__":
     plt.title(f'Modular Sum (training on {params.training_fraction * 100:.0f}% of data)')
     plt.legend()
     plt.grid(True)
-    plt.savefig(f'./figures/{architecture}_{params.training_fraction * 100:.0f}_loss.png')
+    plt.savefig(save_fig_path + f'/{params.training_fraction * 100:.0f}_loss.png')
 
     # plt.show()

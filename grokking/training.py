@@ -1,5 +1,4 @@
 import torch
-from math import ceil
 from tqdm import tqdm
 
 def train(model, train_loader, val_loader, optimizer, scheduler, params):
