@@ -1,0 +1,40 @@
+base_config: &BASE_CONFIG
+    random_seed: 42
+    # log_test_interval: 100
+
+transformer: &TRANSFORMER
+    <<: *BASE_CONFIG
+    # binary operation
+    operation: 'x+y'
+    prime: 97
+    training_fraction: 0.5
+    optimizer: 'adamw'
+
+    # transformer parameters
+    num_layers: 2
+    dim_model: 128
+    num_heads: 4
+    batch_size: 512
+    learning_rate: 0.001
+    weight_decay: 1
+    epochs: 1000
+
+MLP: &MLP
+    <<: *BASE_CONFIG
+    # binary operation
+    operation: 'x+y'
+    prime: 97
+    training_fraction: 0.5
+
+    # MLP parameters
+    epochs: 1000
+
+LSTM: &LSTM
+    <<: *BASE_CONFIG
+    # binary operation
+    operation: 'x+y'
+    prime: 97
+    training_fraction: 0.5
+
+    # LSTM parameters
+    epochs: 1000

@@ -1,102 +1,73 @@
-from math import ceil
 import torch
+from math import ceil
 from tqdm import tqdm
-import wandb
 
-from data import get_data
-from model import Transformer
+def train(model, train_loader, val_loader, optimizer, scheduler, params):
+    device = params.device
+    epochs = params.epochs
+    log_test_interval = params.log_test_interval if hasattr(params, 'log_test_interval') else epochs + 1
 
-def main(args: dict):
-    wandb.init(project="grokking", config=args)
-    config = wandb.config
-    device = torch.device(config.device)
+    train_accuracy = []
+    train_loss = []
+    val_accuracy = []
+    val_loss = []
+    for epoch in tqdm(range(epochs)):
+        # Set model to training mode
+        model.train()
+        epoch_loss = 0
+        train_count = 0
+        train_acc = 0
+        criterion = torch.nn.CrossEntropyLoss()
 
-    # Define time scales
-    wandb.define_metric("step")
-    wandb.define_metric("epoch")
+        # Loop over each batch from the training set
+        for batch in train_loader:
 
-    # Define metrics
-    wandb.define_metric("training/accuracy", step_metric='step')
-    wandb.define_metric("training/loss", step_metric='step')
-    wandb.define_metric("validation/accuracy", step_metric='epoch')
-    wandb.define_metric("validation/loss", step_metric='epoch')
+            # Copy data to device if needed
+            batch = tuple(t.to(device) for t in batch)
 
-    train_loader, val_loader = get_data(
-        config.operation,
-        config.prime,
-        config.training_fraction,
-        config.batch_size
-        )
-    model = Transformer(
-        num_layers=config.num_layers,
-        dim_model=config.dim_model,
-        num_heads=config.num_heads,
-        num_tokens=config.prime + 2,
-        seq_len=5
-        ).to(device)
-    optimizer = torch.optim.AdamW(
-        model.parameters(),
-        lr=config.learning_rate,
-        betas=(0.9, 0.98),
-        weight_decay=config.weight_decay
-        )
-    scheduler = torch.optim.lr_scheduler.LinearLR(
-        optimizer, start_factor = 0.1, total_iters=9
-    )
+            # Unpack the batch from the loader
+            inputs, labels = batch
 
-    num_epochs = ceil(config.num_steps / len(train_loader))
-
-    for epoch in tqdm(range(num_epochs)):
-        train(model, train_loader, optimizer, scheduler, device, config.num_steps)
-        evaluate(model, val_loader, device, epoch)
-
-def train(model, train_loader, optimizer, scheduler, device, num_steps):
-    # Set model to training mode
-    model.train()
-    criterion = torch.nn.CrossEntropyLoss()
-
-    # Loop over each batch from the training set
-    for batch in train_loader:
-
-        # Copy data to device if needed
-        batch = tuple(t.to(device) for t in batch)
-
-        # Unpack the batch from the loader
-        inputs, labels = batch
-
-        # Zero gradient buffers
-        optimizer.zero_grad()
+            # Zero gradient buffers
+            optimizer.zero_grad()
         
-        # Forward pass
-        output = model(inputs)[-1,:,:]
-        loss = criterion(output, labels)
-        acc = (torch.argmax(output, dim=1) == labels).sum() / len(labels)
+            # Forward pass
+            output = model(inputs)[-1,:,:]
+            train_count += len(labels)
+            loss = criterion(output, labels)
+            train_acc += (torch.argmax(output, dim=1) == labels).sum().item()
         
-        # Backward pass
-        loss.backward()
+            # Backward pass
+            loss.backward()
 
-        # Update weights
-        optimizer.step()
+            # Update weights
+            optimizer.step()
+
+            epoch_loss += loss.item()
+        
+        assert train_count == len(train_loader.dataset)
+        avg_epoch_loss = epoch_loss / train_count
+        train_accuracy.append(train_acc / train_count)
+        train_loss.append(avg_epoch_loss)
         scheduler.step()
 
-        metrics = {
-            "training/accuracy": acc,
-            "training/loss": loss,
-            "step": wandb.run.step
-        }
-        wandb.log(metrics)
+        if (epoch + 1) % log_test_interval == 0:
+            print(f"Epoch {epoch+1}: Loss: {avg_epoch_loss:.7f}")
+        
+        val_acc, test_loss = evaluate(model, val_loader, device)
+        val_accuracy.append(val_acc)
+        val_loss.append(test_loss)
+    
+    return train_accuracy, train_loss, val_accuracy, val_loss
 
-        # Finish training at maximum gradient updates
-        if wandb.run.step == num_steps:
-            return
 
-def evaluate(model, val_loader, device, epoch):
+def evaluate(model, val_loader, device):
     # Set model to evaluation mode
     model.eval()
     criterion = torch.nn.CrossEntropyLoss()
 
     correct = 0
-    loss = 0.
+    loss = 0
 
     # Loop over each batch from the validation set
     for batch in val_loader:
@@ -110,15 +81,10 @@ def evaluate(model, val_loader, device, epoch):
         # Forward pass
         with torch.no_grad():
             output = model(inputs)[-1,:,:]
-            correct += (torch.argmax(output, dim=1) == labels).sum()
+            correct += (torch.argmax(output, dim=1) == labels).sum().item()
             loss += criterion(output, labels) * len(labels)
     
     acc = correct / len(val_loader.dataset)
-    loss = loss / len(val_loader.dataset)
+    loss = loss.item() / len(val_loader.dataset)
 
-    metrics = {
-        "validation/accuracy": acc,
-        "validation/loss": loss,
-        "epoch": epoch
-    }
-    wandb.log(metrics, commit=False)
+    return acc, loss

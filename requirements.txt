@@ -1,3 +1,4 @@
 einops
 tqdm
-wandb
+ruamel.yaml
+matplotlib
