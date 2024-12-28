@@ -11,7 +11,6 @@ import grokking.training as training
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", nargs="?", type=str, default="config.yaml")
     parser.add_argument("--architecture", nargs="?", type=str, default="transformer")
     parser.add_argument("--optimizer", nargs="?", type=str, default="adamw")
     parser.add_argument("--random_seed", nargs="?", type=int, default=42)
@@ -19,7 +18,7 @@ if __name__ == "__main__":
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    config_file = args.config
+    config_file = "config.yaml"
     architecture = args.architecture
     print("Using architecture", architecture)
     params = YParams(config_file, architecture, print_params=True)
