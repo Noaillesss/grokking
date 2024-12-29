@@ -20,7 +20,7 @@ transformer: &TRANSFORMER
     dropout: 0.0
     epochs: 10000
 
-MLP: &MLP
+mlp: &mlp
     <<: *BASE_CONFIG
     # binary operation
     operation: 'x+y'
@@ -28,7 +28,13 @@ MLP: &MLP
     training_fraction: 0.5
 
     # MLP parameters
-    epochs: 1000
+    num_layers: 3  # Number of layers in the MLP
+    dim_model: 128  # Hidden layer size
+    dropout: 0.1  # Dropout probability
+    epochs: 10000
+    batch_size: 256
+    learning_rate: 0.001
+    weight_decay: 1
 
 LSTM: &LSTM
     <<: *BASE_CONFIG

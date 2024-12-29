@@ -77,3 +77,21 @@ class Transformer(torch.nn.Module):
         embedding = rearrange(embedding, 'b s d -> s b d')
 
         return self.model(embedding)
+
+class MLP(torch.nn.Module):
+    def __init__(self, input_size: int, hidden_size: int, num_tokens: int, num_layers: int, dropout: float):
+        super().__init__()
+        layers = []
+        for _ in range(num_layers - 1):
+            layers.append(nn.Linear(input_size if len(layers) == 0 else hidden_size, hidden_size))
+            layers.append(nn.ReLU())
+            layers.append(nn.Dropout(p=dropout))
+        layers.append(nn.Linear(hidden_size, num_tokens))  # Final output layer
+        self.model = nn.Sequential(*layers)
+
+    def forward(self, inputs: Tensor):
+        # Flatten inputs if they are not already flattened
+        batch_size, seq_len = inputs.shape[:2]
+        inputs = inputs.view(batch_size, -1)  # Flatten sequence dimension
+        inputs = inputs.float()
+        return self.model(inputs)

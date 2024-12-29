@@ -56,7 +56,13 @@ if __name__ == "__main__":
             dropout=params.dropout
             ).to(device)
     elif architecture == "mlp":
-        NotImplementedError("MLP architecture not implemented")
+        model = MLP(
+            input_size=4,  # Assumes [x, op, y, eq] as input features
+            hidden_size=params.dim_model,
+            num_tokens=params.prime + 2,
+            num_layers=params.num_layers,
+            dropout=params.dropout
+            ).to(device)
     elif architecture == "lstm":
         NotImplementedError("LSTM architecture not implemented")
     else:
