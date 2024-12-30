@@ -65,7 +65,13 @@ if __name__ == "__main__":
             dropout=params.dropout
             ).to(device)
     elif architecture == "lstm":
-        NotImplementedError("LSTM architecture not implemented")
+        model = LSTM(
+            num_layers=params.num_layers,
+            dim_model=params.dim_model,
+            num_tokens=params.prime + 2,
+            hidden_dim=params.hidden_dim,
+            dropout=params.dropout
+        ).to(device)
     else:
         raise ValueError(f"Unknown architecture: {architecture}")
     
