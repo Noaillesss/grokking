@@ -51,12 +51,7 @@ def train(model, train_loader, val_loader, params):
             optimizer.zero_grad()
         
             # Forward pass
-            # 针对 MLP 架构
-            if params._config_name == 'mlp':
-                output = model(inputs)
-            else:
-                # Transformer 的默认逻辑
-                output = model(inputs)[-1, :, :]
+            output = model(inputs)
 
             train_count += len(labels)
             loss = criterion(output, labels)
@@ -74,15 +69,15 @@ def train(model, train_loader, val_loader, params):
         avg_epoch_loss = epoch_loss / train_count
         train_accuracy.append(train_acc / train_count)
         train_loss.append(avg_epoch_loss)
-
-        if (epoch + 1) % log_test_interval == 0:
-            print(f"Epoch {epoch+1}: Loss: {avg_epoch_loss:.7f}, learning rate: {scheduler.get_last_lr()[0]:.7f}")
         
         val_acc, test_loss = evaluate(model, val_loader, device, params._config_name)
         val_accuracy.append(val_acc)
         val_loss.append(test_loss)
         
         scheduler.step()
+
+        if (epoch + 1) % log_test_interval == 0:
+            print(f"Epoch {epoch+1}: train loss: {avg_epoch_loss:.7f}, test loss: {test_loss:.7f}, learning rate: {scheduler.get_last_lr()[0]:.7f}")
 
         # Early stopping (for task 1 & 2)
         if val_acc > 0.99:
@@ -111,12 +106,7 @@ def evaluate(model, val_loader, device, architecture):
         
         # Forward pass
         with torch.no_grad():
-            # 针对 MLP 架构
-            if architecture == 'mlp':
-                output = model(inputs)
-            else:
-                # Transformer 的默认逻辑
-                output = model(inputs)[-1, :, :]
+            output = model(inputs)
             correct += (torch.argmax(output, dim=1) == labels).sum().item()
             loss += criterion(output, labels) * len(labels)
     

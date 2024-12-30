@@ -1,6 +1,6 @@
 base_config: &BASE_CONFIG
     random_seed: 42
-    # log_test_interval: 100
+    # log_test_interval: 1
 
 transformer: &TRANSFORMER
     <<: *BASE_CONFIG

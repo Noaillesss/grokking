@@ -75,8 +75,9 @@ class Transformer(torch.nn.Module):
     def forward(self, inputs: Tensor):
         embedding = self.embed(inputs)
         embedding = rearrange(embedding, 'b s d -> s b d')
+        output = self.model(embedding)
 
-        return self.model(embedding)
+        return output[-1, :, :]
 
 class MLP(nn.Module):
     def __init__(self, num_layers: int, dim_model: int, num_heads: int, num_tokens: int, seq_len: int, dropout: float = 0.0):
