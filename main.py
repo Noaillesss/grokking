@@ -13,7 +13,7 @@ import grokking.training as training
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--architecture", nargs="?", type=str, default="transformer")
-    parser.add_argument("--training_fraction", nargs="?", type=float, default=0.8)
+    parser.add_argument("--training_fraction", nargs="?", type=float, default=0.5)
     parser.add_argument("--optimizer", nargs="?", type=str, default="adamw")
     parser.add_argument("--random_seed", nargs="?", type=int, default=42)
     args = parser.parse_args()
@@ -56,7 +56,14 @@ if __name__ == "__main__":
             dropout=params.dropout
             ).to(device)
     elif architecture == "mlp":
-        NotImplementedError("MLP architecture not implemented")
+        model = MLP(
+            num_layers=params.num_layers,
+            dim_model=params.dim_model,
+            num_heads=params.num_heads,
+            num_tokens=params.prime + 2,
+            seq_len=4,
+            dropout=params.dropout
+            ).to(device)
     elif architecture == "lstm":
         NotImplementedError("LSTM architecture not implemented")
     else:
@@ -81,7 +88,7 @@ if __name__ == "__main__":
     scheduler = torch.optim.lr_scheduler.LinearLR(
         optimizer, start_factor = 0.1, total_iters=9
     )
-
+    # print(params._config_name)
     train_accuracy, train_loss, val_accuracy, val_loss = training.train(model, train_loader, val_loader, optimizer, scheduler, params)
 
     save_fig_path = f'./figures/{architecture}'

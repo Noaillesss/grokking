@@ -26,12 +26,18 @@ def train(model, train_loader, val_loader, optimizer, scheduler, params):
 
             # Unpack the batch from the loader
             inputs, labels = batch
-
+            
             # Zero gradient buffers
             optimizer.zero_grad()
         
             # Forward pass
-            output = model(inputs)[-1,:,:]
+            # 针对 MLP 架构
+            if params._config_name == 'mlp':
+                output = model(inputs)
+            else:
+                # Transformer 的默认逻辑
+                output = model(inputs)[-1, :, :]
+
             train_count += len(labels)
             loss = criterion(output, labels)
             train_acc += (torch.argmax(output, dim=1) == labels).sum().item()
@@ -53,14 +59,14 @@ def train(model, train_loader, val_loader, optimizer, scheduler, params):
         if (epoch + 1) % log_test_interval == 0:
             print(f"Epoch {epoch+1}: Loss: {avg_epoch_loss:.7f}")
         
-        val_acc, test_loss = evaluate(model, val_loader, device)
+        val_acc, test_loss = evaluate(model, val_loader, device, params._config_name)
         val_accuracy.append(val_acc)
         val_loss.append(test_loss)
     
     return train_accuracy, train_loss, val_accuracy, val_loss
 
 
-def evaluate(model, val_loader, device):
+def evaluate(model, val_loader, device, architecture):
     # Set model to evaluation mode
     model.eval()
     criterion = torch.nn.CrossEntropyLoss()
@@ -79,7 +85,12 @@ def evaluate(model, val_loader, device):
         
         # Forward pass
         with torch.no_grad():
-            output = model(inputs)[-1,:,:]
+            # 针对 MLP 架构
+            if architecture == 'mlp':
+                output = model(inputs)
+            else:
+                # Transformer 的默认逻辑
+                output = model(inputs)[-1, :, :]
             correct += (torch.argmax(output, dim=1) == labels).sum().item()
             loss += criterion(output, labels) * len(labels)
     

@@ -78,6 +78,36 @@ class Transformer(torch.nn.Module):
 
         return self.model(embedding)
 
+class MLP(nn.Module):
+    def __init__(self, num_layers: int, dim_model: int, num_heads: int, num_tokens: int, seq_len: int, dropout: float = 0.0):
+        super().__init__()
+        self.token_embeddings = nn.Embedding(num_tokens, dim_model)
+        self.position_embeddings = nn.Embedding(seq_len, dim_model)
+        input_dim = seq_len * dim_model
+        hidden_dim = input_dim
+        layers = []
+        for _ in range(num_layers - 1):
+            layers.append(nn.Linear(hidden_dim, hidden_dim))
+            layers.append(nn.ReLU())
+        self.model = nn.Sequential(
+            nn.Linear(input_dim, hidden_dim),
+            nn.ReLU(),
+            *layers,
+            nn.LayerNorm(hidden_dim),
+            nn.Linear(hidden_dim, num_tokens),
+        )
+        self.dropout = nn.Dropout(dropout)
+    
+    def forward(self, inputs: Tensor):
+        batch_size, context_len = inputs.shape
+        token_embeddings = self.token_embeddings(inputs)
+        position_embeddings = self.position_embeddings(torch.arange(context_len, device=inputs.device).unsqueeze(0).repeat(batch_size, 1))
+        embedding = token_embeddings + position_embeddings
+        embedding = self.dropout(embedding)
+        embedding = rearrange(embedding, 'b s d -> b (s d)')
+        output = self.model(embedding)
+        return output
+
 class LSTM(nn.Module):
     def __init__(self,
                  num_layers: int,
