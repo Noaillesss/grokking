@@ -78,40 +78,32 @@ class Transformer(torch.nn.Module):
 
         return self.model(embedding)
 
-class MLPBlock(nn.Module):
-    def __init__(self, dim_model: int):
-        super().__init__()
-        self.ffn = nn.Sequential(
-            nn.Linear(dim_model, dim_model * 2),
-            nn.ReLU(),
-            nn.Linear(dim_model * 2, dim_model),
-        )
-        self.layer_norm = nn.LayerNorm(dim_model)
-    
-    def forward(self, x: Tensor):
-        return self.layer_norm(x + self.ffn(x))
-
 class MLP(nn.Module):
-    def __init__(self, input_size, embedding_size, num_embeddings, hidden_size, num_layers, dropout, num_tokens):
+    def __init__(self, num_layers: int, dim_model: int, num_heads: int, num_tokens: int, seq_len: int, dropout: float = 0.0):
         super().__init__()
-        self.op_embedding = nn.Embedding(num_embeddings, embedding_size)
-        self.eq_embedding = nn.Embedding(num_embeddings, embedding_size)
-        self.mlp_blocks = nn.ModuleList([MLPBlock(hidden_size) for _ in range(num_layers)])
-        self.fc_in = nn.Linear(input_size + 2 * embedding_size, hidden_size)
-        self.fc_out = nn.Linear(hidden_size, num_tokens)
+        self.token_embeddings = nn.Embedding(num_tokens, dim_model)
+        self.position_embeddings = nn.Embedding(seq_len, dim_model)
+        input_dim = seq_len * dim_model
+        hidden_dim = input_dim
+        layers = []
+        for _ in range(num_layers - 1):
+            layers.append(nn.Linear(hidden_dim, hidden_dim))
+            layers.append(nn.ReLU())
+        self.model = nn.Sequential(
+            nn.Linear(input_dim, hidden_dim),
+            nn.ReLU(),
+            *layers,
+            nn.LayerNorm(hidden_dim),
+            nn.Linear(hidden_dim, num_tokens),
+        )
         self.dropout = nn.Dropout(dropout)
     
-    def forward(self, inputs):
-        x = inputs[:, 0].unsqueeze(1)  # numerical input x
-        y = inputs[:, 2].unsqueeze(1)  # numerical input y
-        op = inputs[:, 1].long()  # token input op
-        eq = inputs[:, 3].long()  # token input eq
-        op_emb = self.op_embedding(op)
-        eq_emb = self.eq_embedding(eq)
-        combined_input = torch.cat((x, y, op_emb, eq_emb), dim=1)
-        x = self.fc_in(combined_input)
-        for block in self.mlp_blocks:
-            x = block(x)
-        x = self.dropout(x)
-        output = self.fc_out(x)
+    def forward(self, inputs: Tensor):
+        batch_size, context_len = inputs.shape
+        token_embeddings = self.token_embeddings(inputs)
+        position_embeddings = self.position_embeddings(torch.arange(context_len, device=inputs.device).unsqueeze(0).repeat(batch_size, 1))
+        embedding = token_embeddings + position_embeddings
+        embedding = self.dropout(embedding)
+        embedding = rearrange(embedding, 'b s d -> b (s d)')
+        output = self.model(embedding)
         return output

@@ -13,7 +13,7 @@ import grokking.training as training
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--architecture", nargs="?", type=str, default="transformer")
-    parser.add_argument("--training_fraction", nargs="?", type=float, default=0.8)
+    parser.add_argument("--training_fraction", nargs="?", type=float, default=0.5)
     parser.add_argument("--optimizer", nargs="?", type=str, default="adamw")
     parser.add_argument("--random_seed", nargs="?", type=int, default=42)
     args = parser.parse_args()
@@ -57,13 +57,12 @@ if __name__ == "__main__":
             ).to(device)
     elif architecture == "mlp":
         model = MLP(
-            input_size=2,  # x and y
-            embedding_size=params.embedding_size,
-            num_embeddings=params.prime + 2,  # for op and eq tokens
-            hidden_size=params.dim_model,
             num_layers=params.num_layers,
-            dropout=params.dropout,
-            num_tokens=params.prime  # number of possible labels
+            dim_model=params.dim_model,
+            num_heads=params.num_heads,
+            num_tokens=params.prime + 2,
+            seq_len=4,
+            dropout=params.dropout
             ).to(device)
     elif architecture == "lstm":
         NotImplementedError("LSTM architecture not implemented")
