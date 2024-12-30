@@ -34,7 +34,7 @@ mlp: &MLP
     learning_rate: 0.001
     weight_decay: 1e-4
 
-LSTM: &LSTM
+lstm: &LSTM
     <<: *BASE_CONFIG
     # binary operation
     operation: 'x+y'
@@ -42,4 +42,11 @@ LSTM: &LSTM
     training_fraction: 0.5
 
     # LSTM parameters
-    epochs: 1000
+    num_layers: 2
+    dim_model: 128
+    hidden_dim: 128
+    batch_size: 512
+    learning_rate: 0.001
+    weight_decay: 1
+    dropout: 0.0
+    epochs: 10000

@@ -107,3 +107,23 @@ class MLP(nn.Module):
         embedding = rearrange(embedding, 'b s d -> b (s d)')
         output = self.model(embedding)
         return output
+
+class LSTM(nn.Module):
+    def __init__(self,
+                 num_layers: int,
+                 dim_model: int,
+                 num_tokens: int,
+                 hidden_dim: int,
+                 dropout: float):
+        super(LSTM, self).__init__()
+
+        self.token_embeddings = nn.Embedding(num_tokens, dim_model)
+        self.hidden_dim = hidden_dim
+        self.num_layers = num_layers
+        self.lstm = nn.LSTM(dim_model, hidden_dim, num_layers, batch_first=True, dropout=dropout)
+        self.fc = nn.Linear(hidden_dim, num_tokens)
+
+    def forward(self, inputs: torch.Tensor):
+        embedded = self.token_embeddings(inputs)
+        lstm_out, _ = self.lstm(embedded)
+        return self.fc(lstm_out[:,-1,:])
