@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 
 # Transformer architecture
 data_fractions = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-num_epochs_transformer = [1e5, 4596, 708, 294, 168, 88, 60, 43, 44]
+num_epochs_transformer = [1e5, 2160, 605, 291, 127, 86, 59, 41, 37]
 
 plt.figure(figsize=(10, 6))
 plt.plot(data_fractions, num_epochs_transformer, label='transformer', linewidth=2)

@@ -1,9 +1,8 @@
 from einops import rearrange
-import numpy as np
 import torch
 from torch import nn, Tensor
 
-class DecoderBlock(torch.nn.Module):
+class DecoderBlock(nn.Module):
     def __init__(self, dim_model: int, n_heads: int, dropout: float):
         super().__init__()
 
@@ -31,52 +30,33 @@ class DecoderBlock(torch.nn.Module):
 
         return a2
 
-class Transformer(torch.nn.Module):
+class Transformer(nn.Module):
     def __init__(self, 
                  num_layers: int, 
                  dim_model: int, 
                  num_heads: int, 
                  num_tokens: int, 
-                 dropout: float,
+                 seq_len: int, 
+                 dropout: float, 
                  max_context_len: int = 1024):
         super().__init__()
 
         self.max_context_len = max_context_len
         self.token_embeddings = nn.Embedding(num_tokens, dim_model)
-        self.register_buffer(
-            "position_encoding", self._position_encoding(max_context_len, dim_model)
-        )
+        self.position_embeddings = nn.Embedding(seq_len, dim_model)
         self.model = nn.Sequential(
             *[DecoderBlock(dim_model, num_heads, dropout) for _ in range(num_layers)],
             nn.LayerNorm(dim_model),
             nn.Linear(dim_model, num_tokens)
         )
 
-    @classmethod
-    def _position_encoding(cls, context_len: int, d_model: int) -> Tensor:
-        rows = [Tensor([np.sin(pos / (10000 ** (i / d_model))) if i % 2 == 0
-                    else np.cos(pos / (10000 ** ((i - 1) / d_model))) for i in range(d_model)])
-                for pos in range(context_len)
-                ]
-        stack = torch.stack(rows, dim=1)
-
-        return stack.T
-    
-    def embed(self, indices: Tensor) -> Tensor:
-        batch_size = indices.shape[0]
-        context_len = indices.shape[-1]
-        pe = self.position_encoding[:context_len, :]
-        pe = pe.unsqueeze(0).repeat(batch_size, 1, 1)
-
-        embedded = self.token_embeddings(indices)
-
-        return pe + embedded
-
     def forward(self, inputs: Tensor):
-        embedding = self.embed(inputs)
+        batch_size, context_len = inputs.shape
+        token_embedding = self.token_embeddings(inputs)
+        position_embedding = self.position_embeddings(torch.arange(context_len, device=inputs.device).unsqueeze(0).repeat(batch_size, 1))
+        embedding = token_embedding + position_embedding
         embedding = rearrange(embedding, 'b s d -> s b d')
         output = self.model(embedding)
-
         return output[-1, :, :]
 
 class MLP(nn.Module):

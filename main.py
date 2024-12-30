@@ -53,6 +53,7 @@ if __name__ == "__main__":
             dim_model=params.dim_model,
             num_heads=params.num_heads,
             num_tokens=params.prime + 2,
+            seq_len=4,
             dropout=params.dropout
             ).to(device)
     elif architecture == "mlp":
