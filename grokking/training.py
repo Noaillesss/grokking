@@ -81,9 +81,12 @@ def train(model, train_loader, val_loader, params):
 
         # Early stopping (for task 1 & 2)
         if val_acc > 0.99:
-            print(f"Early stopping at epoch {epoch+1}")
+            print(f"Early stopping at epoch {epoch + 1}.")
             break
     
+    # Print the best validation accuracy (for task 3)
+    print(f"The best validation accuracy is {max(val_accuracy)} during {epochs} epochs.")
+
     return train_accuracy, train_loss, val_accuracy, val_loss
 
 
