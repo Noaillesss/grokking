@@ -18,7 +18,7 @@ transformer: &TRANSFORMER
     learning_rate: 0.001
     weight_decay: 1
     dropout: 0.0
-    epochs: 10000
+    epochs: 100000
 
 mlp: &MLP
     <<: *BASE_CONFIG

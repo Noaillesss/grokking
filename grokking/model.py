@@ -38,7 +38,7 @@ class Transformer(torch.nn.Module):
                  num_heads: int, 
                  num_tokens: int, 
                  dropout: float,
-                 max_context_len: int = 5):
+                 max_context_len: int = 1024):
         super().__init__()
 
         self.max_context_len = max_context_len

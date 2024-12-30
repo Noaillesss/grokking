@@ -1,7 +1,27 @@
 import torch
 from tqdm import tqdm
 
-def train(model, train_loader, val_loader, optimizer, scheduler, params):
+def train(model, train_loader, val_loader, params):
+    # set up optimizer
+    if params.optimizer == "adamw":
+        optimizer = torch.optim.AdamW(
+            model.parameters(),
+            lr=params.learning_rate,
+            betas=(0.9, 0.98),
+            weight_decay=params.weight_decay
+            )
+    elif params.optimizer == "sgd":
+        optimizer = torch.optim.SGD(
+            model.parameters(),
+            lr=params.learning_rate,
+            weight_decay=params.weight_decay
+            )
+    else:
+        raise ValueError(f"Unknown optimizer: {params.optimizer}")
+    
+    # set up scheduler
+    scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor = 0.01, total_iters=10)
+
     device = params.device
     epochs = params.epochs
     log_test_interval = params.log_test_interval if hasattr(params, 'log_test_interval') else epochs + 1
@@ -54,14 +74,20 @@ def train(model, train_loader, val_loader, optimizer, scheduler, params):
         avg_epoch_loss = epoch_loss / train_count
         train_accuracy.append(train_acc / train_count)
         train_loss.append(avg_epoch_loss)
-        scheduler.step()
 
         if (epoch + 1) % log_test_interval == 0:
-            print(f"Epoch {epoch+1}: Loss: {avg_epoch_loss:.7f}")
+            print(f"Epoch {epoch+1}: Loss: {avg_epoch_loss:.7f}, learning rate: {scheduler.get_last_lr()[0]:.7f}")
         
         val_acc, test_loss = evaluate(model, val_loader, device, params._config_name)
         val_accuracy.append(val_acc)
         val_loss.append(test_loss)
+        
+        scheduler.step()
+
+        # Early stopping (for task 1 & 2)
+        if val_acc > 0.99:
+            print(f"Early stopping at epoch {epoch+1}")
+            break
     
     return train_accuracy, train_loss, val_accuracy, val_loss
 

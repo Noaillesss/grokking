@@ -69,27 +69,7 @@ if __name__ == "__main__":
     else:
         raise ValueError(f"Unknown architecture: {architecture}")
     
-    if params.optimizer == "adamw":
-        optimizer = torch.optim.AdamW(
-            model.parameters(),
-            lr=params.learning_rate,
-            betas=(0.9, 0.98),
-            weight_decay=params.weight_decay
-            )
-    elif params.optimizer == "sgd":
-        optimizer = torch.optim.SGD(
-            model.parameters(),
-            lr=params.learning_rate,
-            weight_decay=params.weight_decay
-            )
-    else:
-        raise ValueError(f"Unknown optimizer: {params.optimizer}")
-    
-    scheduler = torch.optim.lr_scheduler.LinearLR(
-        optimizer, start_factor = 0.1, total_iters=9
-    )
-    # print(params._config_name)
-    train_accuracy, train_loss, val_accuracy, val_loss = training.train(model, train_loader, val_loader, optimizer, scheduler, params)
+    train_accuracy, train_loss, val_accuracy, val_loss = training.train(model, train_loader, val_loader, params)
 
     save_fig_path = f'./figures/{architecture}'
     if not os.path.exists(save_fig_path):
