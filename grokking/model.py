@@ -78,20 +78,40 @@ class Transformer(torch.nn.Module):
 
         return self.model(embedding)
 
-class MLP(torch.nn.Module):
-    def __init__(self, input_size: int, hidden_size: int, num_tokens: int, num_layers: int, dropout: float):
+class MLPBlock(nn.Module):
+    def __init__(self, dim_model: int):
         super().__init__()
-        layers = []
-        for _ in range(num_layers - 1):
-            layers.append(nn.Linear(input_size if len(layers) == 0 else hidden_size, hidden_size))
-            layers.append(nn.ReLU())
-            layers.append(nn.Dropout(p=dropout))
-        layers.append(nn.Linear(hidden_size, num_tokens))  # Final output layer
-        self.model = nn.Sequential(*layers)
+        self.ffn = nn.Sequential(
+            nn.Linear(dim_model, dim_model * 2),
+            nn.ReLU(),
+            nn.Linear(dim_model * 2, dim_model),
+        )
+        self.layer_norm = nn.LayerNorm(dim_model)
+    
+    def forward(self, x: Tensor):
+        return self.layer_norm(x + self.ffn(x))
 
-    def forward(self, inputs: Tensor):
-        # Flatten inputs if they are not already flattened
-        batch_size, seq_len = inputs.shape[:2]
-        inputs = inputs.view(batch_size, -1)  # Flatten sequence dimension
-        inputs = inputs.float()
-        return self.model(inputs)
+class MLP(nn.Module):
+    def __init__(self, input_size, embedding_size, num_embeddings, hidden_size, num_layers, dropout, num_tokens):
+        super().__init__()
+        self.op_embedding = nn.Embedding(num_embeddings, embedding_size)
+        self.eq_embedding = nn.Embedding(num_embeddings, embedding_size)
+        self.mlp_blocks = nn.ModuleList([MLPBlock(hidden_size) for _ in range(num_layers)])
+        self.fc_in = nn.Linear(input_size + 2 * embedding_size, hidden_size)
+        self.fc_out = nn.Linear(hidden_size, num_tokens)
+        self.dropout = nn.Dropout(dropout)
+    
+    def forward(self, inputs):
+        x = inputs[:, 0].unsqueeze(1)  # numerical input x
+        y = inputs[:, 2].unsqueeze(1)  # numerical input y
+        op = inputs[:, 1].long()  # token input op
+        eq = inputs[:, 3].long()  # token input eq
+        op_emb = self.op_embedding(op)
+        eq_emb = self.eq_embedding(eq)
+        combined_input = torch.cat((x, y, op_emb, eq_emb), dim=1)
+        x = self.fc_in(combined_input)
+        for block in self.mlp_blocks:
+            x = block(x)
+        x = self.dropout(x)
+        output = self.fc_out(x)
+        return output

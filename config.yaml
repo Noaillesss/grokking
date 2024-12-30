@@ -22,19 +22,18 @@ transformer: &TRANSFORMER
 
 mlp: &mlp
     <<: *BASE_CONFIG
-    # binary operation
     operation: 'x+y'
     prime: 97
-    training_fraction: 0.5
-
-    # MLP parameters
-    num_layers: 3  # Number of layers in the MLP
-    dim_model: 128  # Hidden layer size
-    dropout: 0.1  # Dropout probability
+    training_fraction: 0.8  # Reduced to induce grokking
+    num_layers: 3
+    dim_model: 128
+    embedding_size: 10
+    dropout: 0.0
     epochs: 10000
-    batch_size: 256
-    learning_rate: 0.001
-    weight_decay: 1
+    batch_size: 128
+    learning_rate: 0.0004
+    weight_decay: 0.01
+    # random_seed: 42
 
 LSTM: &LSTM
     <<: *BASE_CONFIG

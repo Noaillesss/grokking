@@ -57,11 +57,13 @@ if __name__ == "__main__":
             ).to(device)
     elif architecture == "mlp":
         model = MLP(
-            input_size=4,  # Assumes [x, op, y, eq] as input features
+            input_size=2,  # x and y
+            embedding_size=params.embedding_size,
+            num_embeddings=params.prime + 2,  # for op and eq tokens
             hidden_size=params.dim_model,
-            num_tokens=params.prime + 2,
             num_layers=params.num_layers,
-            dropout=params.dropout
+            dropout=params.dropout,
+            num_tokens=params.prime  # number of possible labels
             ).to(device)
     elif architecture == "lstm":
         NotImplementedError("LSTM architecture not implemented")
@@ -87,7 +89,7 @@ if __name__ == "__main__":
     scheduler = torch.optim.lr_scheduler.LinearLR(
         optimizer, start_factor = 0.1, total_iters=9
     )
-
+    # print(params._config_name)
     train_accuracy, train_loss, val_accuracy, val_loss = training.train(model, train_loader, val_loader, optimizer, scheduler, params)
 
     save_fig_path = f'./figures/{architecture}'

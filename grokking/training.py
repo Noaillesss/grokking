@@ -26,7 +26,7 @@ def train(model, train_loader, val_loader, optimizer, scheduler, params):
 
             # Unpack the batch from the loader
             inputs, labels = batch
-
+            
             # Zero gradient buffers
             optimizer.zero_grad()
         
@@ -37,6 +37,7 @@ def train(model, train_loader, val_loader, optimizer, scheduler, params):
             else:
                 # Transformer 的默认逻辑
                 output = model(inputs)[-1, :, :]
+
             train_count += len(labels)
             loss = criterion(output, labels)
             train_acc += (torch.argmax(output, dim=1) == labels).sum().item()
