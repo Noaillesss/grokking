@@ -8,7 +8,7 @@ best_accuracies = [np.random.rand(9) * 100,
                    [7.061046168378793, 100, 100, 100, 100, 100, 100, 100, 100], 
                    np.random.rand(9) * 100, 
                    np.random.rand(9) * 100, 
-                   np.random.rand(9) * 100]
+                   [1.0745070256228598, 1.726886291179596, 7.195992105662669, 99.8051718030464, 100, 100, 100, 100, 100]]
 
 # 图表标题
 titles = ["SGD", "Adam", "AdamW, weight decay 1", "SGD with momentum", "Adam, 0.3x baseline LR", "Dropout 0.1, AdamW"]
