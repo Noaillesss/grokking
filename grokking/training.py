@@ -79,13 +79,13 @@ def train(model, train_loader, val_loader, params):
         if (epoch + 1) % log_test_interval == 0:
             print(f"Epoch {epoch+1}: train loss: {avg_epoch_loss:.7f}, test loss: {test_loss:.7f}, learning rate: {scheduler.get_last_lr()[0]:.7f}")
 
-        # # Early stopping (for task 1 & 2)
-        # if val_acc > 0.99:
-        #     print(f"Early stopping at epoch {epoch + 1}.")
-        #     break
+        # Early stopping (for task 1 & 2)
+        if val_acc > 0.99:
+            print(f"Early stopping at epoch {epoch + 1}.")
+            break
     
     # Print the best validation accuracy (for task 3)
-    print(f"The best validation accuracy is {max(val_accuracy)} during {min(epoch+1,epochs)} epochs.")
+    # print(f"The best validation accuracy is {max(val_accuracy)} during {min(epoch+1,epochs)} epochs.")
 
     return train_accuracy, train_loss, val_accuracy, val_loss
 

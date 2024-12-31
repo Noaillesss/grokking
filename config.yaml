@@ -30,9 +30,9 @@ mlp: &MLP
     num_heads: 4
     batch_size: 512
     dropout: 0.0
-    epochs: 10000
-    learning_rate: 0.001
-    weight_decay: 1e-4
+    epochs: 50000
+    learning_rate: 0.01
+    weight_decay: 0.01
 
 lstm: &LSTM
     <<: *BASE_CONFIG
