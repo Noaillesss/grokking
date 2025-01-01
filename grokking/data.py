@@ -1,40 +1,28 @@
 from math import ceil
 import torch
 
-DIVISION_MODULO_OPERATIONS = {
-    "x/y": lambda x, y, p: (x*y % p, y, x),
-}
-
-ALL_MODULO_OPERATIONS = {
-    "x+y": lambda x, y, p: (x, y, (x + y) % p),
-    "x-y": lambda x, y, p: (x, y, (x - y) % p),
-    **DIVISION_MODULO_OPERATIONS,
-}
-
-ALL_OPERATIONS = {
-    **ALL_MODULO_OPERATIONS,
-}
-
-def operation_mod_p_data(operation: str, p: int, eq_token: int, op_token: int):
+def sum_mod_p_data(K: int, p: int, eq_token: int, op_token: int):
     """
-    x◦y (mod p) for 0 <= x < p, 1 <= y < p if operation in DIVISION_MODULO_OPERATIONS
-    x◦y (mod p) for 0 <= x, y < p otherwise
+    x_1 + x_2 + ... + x_K (mod p) for 0 <= x_i < p
     """
     x = torch.arange(0, p)
-    y = torch.arange(0 if not operation in DIVISION_MODULO_OPERATIONS else 1, p)
-    x, y = torch.cartesian_prod(x, y).T
+    x = torch.cartesian_prod(*[x for _ in range(K)])
 
-    eq = torch.ones_like(x) * eq_token
-    op = torch.ones_like(x) * op_token
+    eq = torch.ones(p**K) * eq_token
+    op = torch.ones(p**K) * op_token
 
-    x, y, labels = ALL_OPERATIONS[operation](x, y, p)
+    labels = x.sum(dim=1) % p
 
-    inputs = torch.stack([x, op, y, eq], dim=1)
+    inputs = torch.empty(p**K, 2*K, dtype=x.dtype)
+    for i in range(K):
+        inputs[:, 2*i] = x[:, i]
+        inputs[:, 2*i+1] = op
+    inputs[:, -1] = eq
 
     return inputs, labels
 
-def get_data(operation: str, prime: int, training_fraction: float, batch_size: int):
-    inputs, labels = operation_mod_p_data(operation, prime, prime, prime+1)
+def get_data(K: int, prime: int, training_fraction: float, batch_size: int):
+    inputs, labels = sum_mod_p_data(K, prime, prime, prime+1)
     dataset = torch.utils.data.TensorDataset(inputs, labels)
 
     train_size = int(training_fraction * len(dataset))

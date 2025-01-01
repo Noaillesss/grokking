@@ -16,6 +16,7 @@ if __name__ == "__main__":
     parser.add_argument("--training_fraction", nargs="?", type=float, default=0.5)
     parser.add_argument("--optimizer", nargs="?", type=str, default="adamw")
     parser.add_argument("--random_seed", nargs="?", type=int, default=42)
+    parser.add_argument("--length", nargs="?", type=int, default=2)
     args = parser.parse_args()
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -35,25 +36,28 @@ if __name__ == "__main__":
     if args.random_seed is not None:
         params.random_seed = args.random_seed
         print("Overriding random seed to", params.random_seed)
+    if args.length is not None:
+        params.length = args.length
+        print("Overriding length to", params.length)
     
     torch.manual_seed(params.random_seed)
     random.seed(params.random_seed)
     np.random.seed(params.random_seed)
 
     train_loader, val_loader = get_data(
-        params.operation,
+        params.length,
         params.prime,
         params.training_fraction,
         params.batch_size
         )
     
-    if architecture == "transformer":
+    if architecture == "transformer" or architecture == "transformer_k":
         model = Transformer(
             num_layers=params.num_layers,
             dim_model=params.dim_model,
             num_heads=params.num_heads,
             num_tokens=params.prime + 2,
-            seq_len=4,
+            seq_len=2*params.length,
             dropout=params.dropout
             ).to(device)
     elif architecture == "mlp":
@@ -62,7 +66,7 @@ if __name__ == "__main__":
             dim_model=params.dim_model,
             num_heads=params.num_heads,
             num_tokens=params.prime + 2,
-            seq_len=4,
+            seq_len=2*params.length,
             dropout=params.dropout
             ).to(device)
     elif architecture == "lstm":

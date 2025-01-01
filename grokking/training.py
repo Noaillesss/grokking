@@ -85,7 +85,7 @@ def train(model, train_loader, val_loader, params):
             break
     
     # Print the best validation accuracy (for task 3)
-    # print(f"The best validation accuracy is {max(val_accuracy)} during {min(epoch+1,epochs)} epochs.")
+    print(f"The best validation accuracy is {max(val_accuracy)} during {min(epoch+1,epochs)} epochs.")
 
     return train_accuracy, train_loss, val_accuracy, val_loss
 

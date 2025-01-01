@@ -4,8 +4,8 @@ base_config: &BASE_CONFIG
 
 transformer: &TRANSFORMER
     <<: *BASE_CONFIG
-    # binary operation
-    operation: 'x+y'
+    # modular sum operation of K numbers
+    length: 2
     prime: 97
     training_fraction: 0.5
     optimizer: 'adamw'
@@ -22,7 +22,8 @@ transformer: &TRANSFORMER
 
 mlp: &MLP
     <<: *BASE_CONFIG
-    operation: 'x+y'
+    # modular sum operation of K numbers
+    length: 2
     prime: 97
     training_fraction: 0.5
     num_layers: 2
@@ -36,8 +37,8 @@ mlp: &MLP
 
 lstm: &LSTM
     <<: *BASE_CONFIG
-    # binary operation
-    operation: 'x+y'
+    # modular sum operation of K numbers
+    length: 2
     prime: 97
     training_fraction: 0.5
 
