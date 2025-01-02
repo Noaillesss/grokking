@@ -2,6 +2,10 @@ import torch
 from tqdm import tqdm
 
 def train(model, train_loader, val_loader, params):
+    param_groups = [
+        {"params": [p for n, p in model.named_parameters() if "bias" not in n and "norm" not in n], "weight_decay": params.weight_decay},
+        {"params": [p for n, p in model.named_parameters() if "bias" in n or "norm" in n], "weight_decay": 0.0},
+    ]
     # set up optimizer
     if params.optimizer == "adamw":
         optimizer = torch.optim.AdamW(
@@ -17,11 +21,32 @@ def train(model, train_loader, val_loader, params):
             betas=(0.9, 0.98),
             weight_decay=params.weight_decay
             )
+    elif params.optimizer == "sgd":
+        optimizer = torch.optim.SGD(
+            param_groups,
+            lr=params.learning_rate,
+            momentum=0
+            )
+    elif params.optimizer == "sgd_momentum":
+        optimizer = torch.optim.SGD(
+            param_groups,
+            lr=params.learning_rate,
+            momentum=params.momentum,  # 使用 momentum 参数
+        )
     else:
         raise ValueError(f"Unknown optimizer: {params.optimizer}")
     
+    # 新增：Warmup + Cosine Decay 调度器
+    def lr_lambda(current_step: int):
+        if current_step < params.warmup_steps:
+            return current_step / params.warmup_steps
+        else:
+            progress = (current_step - params.warmup_steps) / max(1, params.total_steps - params.warmup_steps)
+            progress_tensor = torch.tensor(progress, dtype=torch.float32)
+            return 0.5 * (1 + torch.cos(progress_tensor * 3.141592653589793))
+    
     # set up scheduler
-    scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor = 0.01, total_iters=10)
+    scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_lambda) if params.optimizer == "sgd" or params.optimizer == "sgd_momentum" else torch.optim.lr_scheduler.LinearLR(optimizer, start_factor = 0.01, total_iters=10)
 
     device = params.device
     epochs = params.epochs
@@ -31,6 +56,8 @@ def train(model, train_loader, val_loader, params):
     train_loss = []
     val_accuracy = []
     val_loss = []
+    current_step = 0
+
     for epoch in tqdm(range(epochs)):
         # Set model to training mode
         model.train()
@@ -63,6 +90,9 @@ def train(model, train_loader, val_loader, params):
 
             # Update weights
             optimizer.step()
+            if params.optimizer == "sgd" or params.optimizer == "sgd_momentum":
+                scheduler.step() # 每步更新学习率
+                current_step += 1 # 更新全局步数
 
             epoch_loss += loss.item()
         
@@ -75,7 +105,8 @@ def train(model, train_loader, val_loader, params):
         val_accuracy.append(val_acc)
         val_loss.append(test_loss)
         
-        scheduler.step()
+        if not (params.optimizer == "sgd" or params.optimizer == "sgd_momentum"):
+            scheduler.step()
 
         if (epoch + 1) % log_test_interval == 0:
             print(f"Epoch {epoch+1}: train loss: {avg_epoch_loss:.7f}, test loss: {test_loss:.7f}, learning rate: {scheduler.get_last_lr()[0]:.7f}")

@@ -51,6 +51,15 @@ if __name__ == "__main__":
         params.batch_size
         )
     
+    # 确保 warmup_steps 和 total_steps 可用
+    if not hasattr(params, 'total_steps') or params.total_steps is None:
+        print(params.epochs,len(train_loader))
+        params.total_steps = params.epochs * len(train_loader)  # 动态计算 total_steps
+    if not hasattr(params, 'warmup_steps') or params.warmup_steps is None:
+        params.warmup_steps = int(params.total_steps * 0.1)  # 默认 warmup 步数占总步数的 10%
+
+    # print(f"Warmup steps: {params.warmup_steps}, Total steps: {params.total_steps}")
+
     if architecture == "transformer" or architecture == "transformer_k":
         model = Transformer(
             num_layers=params.num_layers,
