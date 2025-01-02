@@ -10,10 +10,11 @@ def train(model, train_loader, val_loader, params):
             betas=(0.9, 0.98),
             weight_decay=params.weight_decay
             )
-    elif params.optimizer == "sgd":
-        optimizer = torch.optim.SGD(
+    elif params.optimizer == "adam":
+        optimizer = torch.optim.Adam(
             model.parameters(),
             lr=params.learning_rate,
+            betas=(0.9, 0.98),
             weight_decay=params.weight_decay
             )
     else:
