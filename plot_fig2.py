@@ -24,9 +24,6 @@ fig.text(0.04, 0.5, 'Best validation accuracy', va='center', rotation='vertical'
 
 plt.tight_layout(rect=[0.05, 0.05, 1, 1])
 
-# Save the figure to a file
-plt.savefig('best_acc.png', dpi=300)  # Save as PNG file
-# plt.savefig('optimizer_comparison.pdf')  # Save as PDF file
-
+plt.savefig('figures/best_acc.eps', format='eps')
 plt.show()
 

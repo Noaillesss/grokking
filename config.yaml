@@ -21,6 +21,25 @@ transformer: &TRANSFORMER
     epochs: 10000
     momentum: 0.9
 
+transformer_k: &TRANSFORMER_K
+    <<: *BASE_CONFIG
+    # modular sum operation of K numbers
+    length: 2
+    prime: 11
+    training_fraction: 0.5
+    optimizer: 'adamw'
+
+    # transformer parameters
+    num_layers: 2
+    dim_model: 64
+    num_heads: 4
+    batch_size: 512
+    learning_rate: 0.001
+    weight_decay: 1
+    dropout: 0.0
+    epochs: 10000
+    momentum: 0.9
+
 mlp: &MLP
     <<: *BASE_CONFIG
     # modular sum operation of K numbers
