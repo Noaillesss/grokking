@@ -21,4 +21,5 @@ plt.title('Steps until generalization for modular sum')
 plt.legend()
 plt.grid(True)
 
+plt.savefig('figures/architecture_acc.eps', format='eps')
 plt.show()
