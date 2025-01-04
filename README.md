@@ -44,6 +44,10 @@ each of them and their description.
 | `plot_fig2.py` | Plot the best validation accuracy for different optimizers and different training data fraction during $10^4$ epochs. |
 | `config.yaml` | Stores the hyperparameters we use in our experiments. |
 
+## Supplementary
+
+All the supplementary materials are available at (https://disk.pku.edu.cn/link/AA4A118796F462468381EBA19E78E19BC1)
+
 ## References
 
 Code:
