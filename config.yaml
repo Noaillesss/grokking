@@ -1,6 +1,6 @@
 base_config: &BASE_CONFIG
     random_seed: 42
-    # log_test_interval: 1
+    # log_test_interval: 1      # log the training loss and learning rate every n epochs
 
 transformer: &TRANSFORMER
     <<: *BASE_CONFIG

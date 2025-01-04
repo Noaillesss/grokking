@@ -12,9 +12,9 @@ import grokking.training as training
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--architecture", nargs="?", type=str, default="transformer")
+    parser.add_argument("--architecture", nargs="?", type=str, default="transformer")   # mlp / lstm / transformer_k
     parser.add_argument("--training_fraction", nargs="?", type=float, default=0.5)
-    parser.add_argument("--optimizer", nargs="?", type=str, default="adamw")
+    parser.add_argument("--optimizer", nargs="?", type=str, default="adamw")            # adam / adamw / sgd
     parser.add_argument("--random_seed", nargs="?", type=int, default=42)
     parser.add_argument("--length", nargs="?", type=int, default=2)
     args = parser.parse_args()
@@ -44,6 +44,7 @@ if __name__ == "__main__":
     random.seed(params.random_seed)
     np.random.seed(params.random_seed)
 
+    # Prepare the training and validation data
     train_loader, val_loader = get_data(
         params.length,
         params.prime,
@@ -51,15 +52,12 @@ if __name__ == "__main__":
         params.batch_size
         )
     
-    # 确保 warmup_steps 和 total_steps 可用
     if not hasattr(params, 'total_steps') or params.total_steps is None:
-        print(params.epochs,len(train_loader))
-        params.total_steps = params.epochs * len(train_loader)  # 动态计算 total_steps
+        params.total_steps = params.epochs * len(train_loader)
     if not hasattr(params, 'warmup_steps') or params.warmup_steps is None:
-        params.warmup_steps = int(params.total_steps * 0.1)  # 默认 warmup 步数占总步数的 10%
+        params.warmup_steps = int(params.total_steps * 0.1)
 
-    # print(f"Warmup steps: {params.warmup_steps}, Total steps: {params.total_steps}")
-
+    # Initialize the model
     if architecture == "transformer" or architecture == "transformer_k":
         model = Transformer(
             num_layers=params.num_layers,
@@ -89,8 +87,10 @@ if __name__ == "__main__":
     else:
         raise ValueError(f"Unknown architecture: {architecture}")
     
+    # Train the model
     train_accuracy, train_loss, val_accuracy, val_loss = training.train(model, train_loader, val_loader, params)
 
+    # Save the results
     save_fig_path = f'./figures/{architecture}'
     if not os.path.exists(save_fig_path):
         os.makedirs(save_fig_path)

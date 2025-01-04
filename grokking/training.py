@@ -31,12 +31,11 @@ def train(model, train_loader, val_loader, params):
         optimizer = torch.optim.SGD(
             param_groups,
             lr=params.learning_rate,
-            momentum=params.momentum,  # 使用 momentum 参数
+            momentum=params.momentum,
         )
     else:
         raise ValueError(f"Unknown optimizer: {params.optimizer}")
     
-    # 新增：Warmup + Cosine Decay 调度器
     def lr_lambda(current_step: int):
         if current_step < params.warmup_steps:
             return current_step / params.warmup_steps
@@ -91,8 +90,8 @@ def train(model, train_loader, val_loader, params):
             # Update weights
             optimizer.step()
             if params.optimizer == "sgd" or params.optimizer == "sgd_momentum":
-                scheduler.step() # 每步更新学习率
-                current_step += 1 # 更新全局步数
+                scheduler.step()
+                current_step += 1
 
             epoch_loss += loss.item()
         
